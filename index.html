@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Via — نظام إدارة وتتبع الرحلات والأسطول الذكي</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="text-slate-800 antialiased bg-[#f8fafc]">
+
+  <div id="toast-container" class="fixed top-6 left-6 z-50 space-y-3 w-96 font-sans"></div>
+
+  <!-- =====================
+       Auth Overlay (Home/Login)
+       ===================== -->
+  <div id="auth-overlay" class="fixed inset-0 z-[1000]">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="relative h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden">
+        <div class="p-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 class="text-xl font-black">Via</h2>
+              <p class="text-xs text-slate-200/90 mt-1">نظام إدارة وتتبع الرحلات والأسطول الذكي</p>
+            </div>
+            <div class="text-xs bg-white/10 border border-white/20 px-3 py-1 rounded-full font-bold">
+              Demo Authentication (Local)
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Tabs -->
+          <div class="flex gap-2 mb-4">
+            <button type="button" id="authTabLogin" class="flex-1 px-3 py-2 rounded-xl text-xs font-bold bg-orange-600 text-white" onclick="authShowTab(&#39;login&#39;)">تسجيل دخول</button>
+            <button type="button" id="authTabSignup" class="flex-1 px-3 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-700" onclick="authShowTab(&#39;signup&#39;)">إنشاء حساب</button>
+            <button type="button" id="authTabReset" class="flex-1 px-3 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-700" onclick="authShowTab(&#39;reset&#39;)">نسيت كلمة السر</button>
+          </div>
+
+          <!-- Login -->
+          <div id="authPanelLogin" class="space-y-3">
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">اسم المستخدم</label>
+              <input id="authLoginUserName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: admin">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">كلمة المرور</label>
+              <input id="authLoginPassword" type="password" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="••••••••">
+            </div>
+
+            <div id="authMessage" class="hidden text-xs font-bold p-3 rounded-xl border"></div>
+
+            <button type="button" onclick="loginUser()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs">دخول</button>
+          </div>
+
+          <!-- Signup -->
+          <div id="authPanelSignup" class="hidden space-y-3">
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">اسم المستخدم</label>
+              <input id="authSignupUserName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: أحمد">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">البريد الإلكتروني</label>
+              <input id="authSignupEmail" type="email" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="name@example.com">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">كلمة المرور</label>
+              <input id="authSignupPassword" type="password" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="••••••••">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">تأكيد كلمة المرور</label>
+              <input id="authSignupPassword2" type="password" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="••••••••">
+            </div>
+
+            <button type="button" onclick="signupUser()" class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs">إنشاء</button>
+          </div>
+
+          <!-- Reset -->
+          <div id="authPanelReset" class="hidden space-y-3">
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">البريد الإلكتروني</label>
+              <input id="authResetEmail" type="email" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="name@example.com">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">كلمة مرور جديدة</label>
+              <input id="authResetNewPassword" type="password" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="••••••••">
+            </div>
+
+            <button type="button" onclick="resetPassword()" class="w-full bg-slate-900 hover:bg-black text-white px-4 py-2 rounded-xl font-bold text-xs">تحديث كلمة السر</button>
+            <p class="text-[11px] text-slate-500 mt-2">
+              * Demo: لا يتم إرسال ايميل حقيقي. يتم التحقق محلياً داخل المتصفح.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="flex h-screen overflow-hidden">
+
+    <aside class="w-72 bg-[#0f172a] text-slate-400 flex flex-col justify-between p-5 hidden md:flex font-poppins text-left border-l border-slate-800 shadow-2xl" dir="ltr">
+      <div>
+        <div class="flex items-center gap-3 px-3 py-4 text-white text-2xl font-black tracking-wider border-b border-slate-800/60">
+          <div class="bg-gradient-to-br from-orange-500 to-amber-600 text-white p-2.5 rounded-xl text-base flex items-center justify-center shadow-lg shadow-orange-600/20">
+            <i class="fa-solid fa-truck-fast animate-pulse"></i>
+          </div>
+          <span>Via <span class="text-xs text-orange-500 font-normal tracking-tight block">Fleet Operations</span></span>
+        </div>
+        
+        <nav class="mt-6 space-y-1" id="sidebarNav">
+          <a href="index.html#" data-page="dashboard" class="nav-link flex items-center justify-between px-4 py-3 bg-slate-800 text-white rounded-xl transition text-sm font-semibold group">
+            <div class="flex items-center gap-3.5">
+              <i class="fa-solid fa-table-cells-large w-5 text-orange-500 text-base transition-transform group-hover:scale-110"></i> 
+              <span>Dashboard</span>
+            </div>
+            <span class="bg-slate-700 text-[10px] px-2 py-0.5 rounded-md text-slate-300">Main</span>
+          </a>
+          <a href="index.html#" data-page="users" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-user w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Users</span>
+          </a>
+          <a href="index.html#" data-page="drivers" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-user-group w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Drivers Database</span>
+          </a>
+          <a href="index.html#" data-page="dispatchers" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-user-gear w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Fleet Control</span>
+          </a>
+          <a href="index.html#" data-page="vehicles" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-car w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>EV/Fuel/Hybrid Vehicles Fleet</span>
+          </a>
+          <a href="index.html#" data-page="hubs" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-warehouse w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Logistics Hubs</span>
+          </a>
+          <a href="index.html#" data-page="assignments" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-route w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>External Assignments</span>
+          </a>
+          <a href="index.html#" data-page="workforce" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-business-time w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Workforce &amp; Shifts</span>
+          </a>
+          <a href="index.html#" data-page="tracking" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-location-crosshairs w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Live GPS Tracking</span>
+          </a>
+          <a href="index.html#" data-page="documents" class="nav-link flex items-center gap-3 px-4 py-3 hover:bg-slate-800/50 hover:text-white rounded-xl transition text-sm group">
+            <i class="fa-solid fa-file-lines w-5 text-slate-500 group-hover:text-orange-400 text-base"></i> <span>Documents &amp; Financials</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800/80 text-xs text-slate-500 space-y-2">
+        <div class="flex items-center justify-between text-[11px]">
+          <span>Engine Status:</span>
+          <span class="text-emerald-500 font-bold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Realtime Sync Active
+          </span>
+        </div>
+        <p class="text-[10px] text-slate-600 text-center">© 2026 Via Systems Inc.</p>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-y-auto bg-[#f8fafc]">
+      
+      <header class="bg-white border-b border-slate-200/80 sticky top-0 z-10 backdrop-blur-md bg-white/95">
+        <div class="px-8 py-4 flex justify-between items-center border-b border-slate-100">
+          <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight" id="pageTitle">لوحة التحكم الرئيسية Dashboard</h1>
+            <span class="bg-orange-50 text-orange-700 text-[11px] px-3 py-1 rounded-full font-extrabold border border-orange-200/60 flex items-center gap-1.5 shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span> البث الموحد الذري (Telemetry + الخريطة + الإشعارات)
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button id="btnSimTrip" onclick="triggerManualTrip()" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-orange-600/10 transition-all transform active:scale-95">
+              <i class="fa-solid fa-bolt text-amber-300"></i> محاكاة استقبال رحلة فورية عشوائية
+            </button>
+          </div>
+        </div>
+
+        <div id="liveTrackingTickerBox" class="bg-slate-900 text-white px-8 py-3 relative overflow-hidden min-h-[54px] flex items-center border-b border-orange-500/20">
+          <div class="absolute right-0 top-0 h-full w-1.5 bg-gradient-to-b from-orange-500 to-amber-600"></div>
+          <div id="tickerContent" class="flex items-center gap-3 w-full transition-all duration-300">
+            </div>
+        </div>
+      </header>
+
+      <div class="p-8 space-y-8">
+        
+        <!-- =====================
+             Home (Top)
+             ===================== -->
+        <section data-page-section="home" class="page-section hidden space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h2 class="text-lg font-black text-slate-900 mb-1 border-b border-slate-100 pb-2">Home</h2>
+                <p class="text-xs text-slate-600 mt-1">لوحة مختصرة للدخول السريع + حالة الجلسة.</p>
+              </div>
+              <button type="button" onclick="logoutUser()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm">
+                <i class="fa-solid fa-right-from-bracket ml-2"></i>تسجيل خروج
+              </button>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                <p class="text-xs text-slate-500 font-bold">حسابك الحالي</p>
+                <p class="mt-2 text-slate-900 font-black text-lg" id="authCurrentUserName">—</p>
+                <p class="text-[11px] text-slate-500 mt-1" id="authCurrentUserEmail">—</p>
+              </div>
+
+              <div class="bg-gradient-to-br from-emerald-50 to-white rounded-xl border border-emerald-200 p-4 shadow-sm">
+                <p class="text-xs text-emerald-700 font-bold">حالة النظام</p>
+                <p class="mt-2 text-emerald-800 font-black text-lg">Demo Ready ✅</p>
+                <p class="text-[11px] text-emerald-700/80 mt-1">تخزين محلي بدون سيرفر.</p>
+              </div>
+
+              <div class="bg-gradient-to-br from-orange-50 to-white rounded-xl border border-orange-200 p-4 shadow-sm">
+                <p class="text-xs text-orange-700 font-bold">اختصار</p>
+                <button type="button" onclick="goToAppDashboard()" class="mt-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm">
+                  فتح Dashboard
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-5 p-4 rounded-2xl border border-slate-200/80 bg-slate-50 space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-900">Home Quick Actions</h3>
+                  <p class="text-xs text-slate-600 mt-1">اختصارات جاهزة لإكمال شغلك بسرعة.</p>
+                </div>
+                <span class="text-[10px] font-mono text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded-full">Local UI</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button type="button" onclick="goToAppPage(&#39;dashboard&#39;)" class="bg-white hover:bg-slate-100 text-slate-900 px-3 py-2 rounded-xl font-bold text-xs border border-slate-200 flex items-center justify-center gap-2 shadow-sm">
+                  <i class="fa-solid fa-chart-line text-orange-500"></i>
+                  Dashboard
+                </button>
+                <button type="button" onclick="goToAppPage(&#39;tracking&#39;)" class="bg-white hover:bg-slate-100 text-slate-900 px-3 py-2 rounded-xl font-bold text-xs border border-slate-200 flex items-center justify-center gap-2 shadow-sm">
+                  <i class="fa-solid fa-location-crosshairs text-orange-500"></i>
+                  Tracking
+                </button>
+                <button type="button" onclick="goToAppPage(&#39;vehicles&#39;)" class="bg-white hover:bg-slate-100 text-slate-900 px-3 py-2 rounded-xl font-bold text-xs border border-slate-200 flex items-center justify-center gap-2 shadow-sm">
+                  <i class="fa-solid fa-car-side text-orange-500"></i>
+                  Vehicles
+                </button>
+              </div>
+
+              <div class="text-[11px] text-slate-600 bg-white/60 border border-slate-200 rounded-xl p-3">
+                <b>ملاحظة:</b> Authentication Demo يعمل على نفس جهازك فقط (localStorage + sessionStorage).
+              </div>
+            </div>
+          </div>
+
+          <section class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+            <div class="px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p class="text-[11px] text-orange-400 font-black tracking-widest uppercase">Live Fleet</p>
+                <h2 class="text-xl font-black text-white mt-1">العربيات الشغالة دلوقتي</h2>
+                <p class="text-xs text-slate-400 mt-1">متابعة سريعة للعربية والسواق وحالة التشغيل</p>
+              </div>
+              <span class="inline-flex items-center gap-2 bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 px-3 py-1.5 rounded-full text-[11px] font-bold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                بث حي
+              </span>
+            </div>
+            <div id="activeVehiclesShowcase" class="grid grid-cols-1 md:grid-cols-2 gap-5 px-6 pb-6"></div>
+          </section>
+        </section>
+
+        <section data-page-section="dashboard" class="page-section space-y-6 hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-600 to-amber-500 flex items-center justify-center shadow-sm border border-orange-200/70">
+                    <i class="fa-solid fa-wave-square text-white text-lg"></i>
+                  </div>
+                  <div>
+                    <span class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <i class="fa-solid fa-chart-line text-orange-600 text-base"></i> Dashboard Ops Control
+                    </span>
+                    <p class="text-xs text-slate-500 mt-1">Telemetry • Map • Alerts — لحظي ومتزامن</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-slate-400 font-mono">آخر تحديث: متزامن بالملي ثانية</span>
+                  <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-extrabold border border-emerald-200/70 bg-emerald-50 text-emerald-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    Realtime Sync Active
+                  </span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                  <p class="text-xs text-slate-500 font-bold">الكباتن المتصلين حالياً</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span id="statDriversConnected" class="text-3xl font-black text-slate-900 font-poppins">4</span>
+                    <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600"><i class="fa-solid fa-user-check text-lg"></i></div>
+                  </div>
+                </div>
+                <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                  <p class="text-xs text-slate-500 font-bold">الكباتن غير المتصلين</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span id="statDriversDisconnected" class="text-3xl font-black text-slate-900 font-poppins">0</span>
+                    <div class="p-2 bg-rose-50 rounded-lg text-rose-600"><i class="fa-solid fa-user-xmark text-lg"></i></div>
+                  </div>
+                </div>
+                <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                  <p class="text-xs text-slate-500 font-bold">رحلات جارية الآن</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span id="statDriversWithTrip" class="text-3xl font-black text-slate-900 font-poppins">3</span>
+                    <div class="p-2 bg-orange-50 rounded-lg text-orange-600"><i class="fa-solid fa-route text-lg"></i></div>
+                  </div>
+                </div>
+                <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                  <p class="text-xs text-slate-500 font-bold">مركبات الـ EV النشطة</p>
+                  <div class="mt-2 flex items-center justify-between">
+                    <span id="statVehiclesConnected" class="text-3xl font-black text-slate-900 font-poppins">4</span>
+                    <div class="p-2 bg-amber-50 rounded-lg text-amber-600"><i class="fa-solid fa-battery-three-quarters text-lg"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900 pb-2 border-b border-slate-100 flex items-center justify-between">
+                  <span>إحصائيات الأسطول العامة</span>
+                  <i class="fa-solid fa-database text-slate-400"></i>
+                </h3>
+                <div class="mt-4 space-y-3.5 text-sm text-slate-700">
+                  <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
+                    <span class="font-medium flex items-center gap-2"><i class="fa-solid fa-users text-slate-400"></i> إجمالي السائقين المقيدين</span>
+                    <span class="font-bold text-slate-900 font-poppins text-base" id="statDriversTotal">4</span>
+                  </div>
+                  <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
+                    <span class="font-medium flex items-center gap-2"><i class="fa-solid fa-car-side text-slate-400"></i> إجمالي العربيات</span>
+                    <span class="font-bold text-slate-900 font-poppins text-base" id="statVehiclesTotal">4</span>
+                  </div>
+                  <div class="bg-slate-50 px-3 py-2 rounded-lg">
+                    <div class="flex justify-between items-center gap-3">
+                      <span class="font-medium flex items-center gap-2"><i class="fa-solid fa-id-badge text-slate-400"></i> اسم السواق</span>
+                      <span class="font-bold text-slate-900 text-xs text-left" id="statDriversNames">—</span>
+                    </div>
+                  </div>
+                  <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-lg">
+                    <span class="font-medium flex items-center gap-2"><i class="fa-solid fa-id-card-clip text-slate-400"></i> رخص أوشكت على الانتهاء</span>
+                    <span class="font-bold text-amber-600 font-poppins text-base" id="statLicenseExpiring">1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+    <section data-page-section="users" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h2 class="text-lg font-black text-slate-900 mb-1 border-b border-slate-100 pb-2">إدارة حسابات ومستويات الكباتن</h2>
+                <p class="text-xs text-slate-600 mt-1">اعرض كل كابتن (Name/Phone/Email/Total Trips/Account Status) وأضف كابتن جديد عند الحاجة.</p>
+              </div>
+              <button type="button" onclick="showAddCaptainForm()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-user-plus"></i> إضافة كابتن
+              </button>
+            </div>
+
+            <div id="addCaptainFormBox" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div class="text-sm font-black text-slate-900 flex items-center justify-between">
+                <span>بيانات كابتن جديد</span>
+                <button type="button" onclick="hideAddCaptainForm()" class="text-slate-500 hover:text-slate-700">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <form id="addCaptainForm" class="grid grid-cols-1 md:grid-cols-2 gap-3" onsubmit="return addCaptainToUsers(event)">
+
+
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">اسم الكابتن</label>
+                  <input id="captainNameInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: كابتن أحمد رجب البستاني" required="">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم الهاتف</label>
+                  <input id="captainPhoneInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: 01012345678" required="">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">البريد الإلكتروني</label>
+                  <input id="captainEmailInput" type="email" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: captain@example.com" required="">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">إجمالي الرحلات</label>
+                  <input id="captainTripsInput" type="number" min="0" step="1" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: 120" required="">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-600 block mb-1">حالة الحساب</label>
+                  <select id="captainStatusInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" required="">
+                    <option value="active">متصل</option>
+                    <option value="disabled">متوقف</option>
+                    <option value="pending">قيد التفعيل</option>
+                  </select>
+                </div>
+                <div class="md:col-span-2 flex items-center gap-3">
+                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs">
+                    إضافة
+                  </button>
+                  <button type="button" onclick="hideAddCaptainForm()" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs">
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-right">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500">
+                    <th class="px-6 py-4">اسم الكابتن</th>
+                    <th class="px-6 py-4">رقم الهاتف</th>
+                    <th class="px-6 py-4">البريد الإلكتروني</th>
+                    <th class="px-6 py-4">إجمالي الرحلات</th>
+                    <th class="px-6 py-4">حالة الحساب</th>
+                    <th class="px-6 py-4">اختيار</th>
+                  </tr>
+                </thead>
+                <tbody id="captainsUsersTableBody" class="divide-y divide-slate-100 text-sm bg-white"></tbody>
+              </table>
+            </div>
+
+            <!-- =============================
+                 Vehicle Delivery Form
+                 ============================= -->
+            <div class="mt-6 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 class="text-sm font-black text-slate-900 mb-1 border-b border-slate-100 pb-2">نموذج استلام مركبة (Vehicle Delivery Form)</h3>
+                  
+                </div>
+                <button type="button" onclick="vehicleDeliveryFormReset()" class="bg-slate-900 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-sm hover:bg-black">مسح الحقول</button>
+              </div>
+
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم النموذج</label>
+                  <input id="vd_form_no" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم ملف السيارة</label>
+                  <input id="vd_file_no" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">تاريخ التسليم</label>
+                  <input id="vd_delivery_date" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">النوع</label>
+                  <input id="vd_type" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم اللوحة</label>
+                  <input id="vd_plate" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">الموديل</label>
+                  <input id="vd_model" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">العداد (كم)</label>
+                  <input id="vd_km" type="number" min="0" step="1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="0">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">اللون</label>
+                  <input id="vd_color" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم الشاسيه</label>
+                  <input id="vd_color" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">رقم الماتور</label>
+                  <input id="vd_color" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                </div>
+                <div class="md:col-span-4">
+                  
+                </div>
+              </div>
+
+              <div class="mt-5 overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-right">
+                  <thead>
+<tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+<th class="px-3 py-3"><span class="text-green-700 font-extrabold">اسم كابتن</span></th>
+                      <th class="px-3 py-3 w-72">
+                        <div class="flex items-center gap-2">
+                          <input id="vd_header_input" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-1 text-[11px] outline-none" placeholder="اكتب هنا">
+                          <button id="vd_header_confirm_btn" type="button" class="bg-slate-900 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold" onclick="vdHeaderConfirm();">تم</button>
+                        </div>
+                        <div id="vd_header_list" class="mt-1 flex flex-wrap items-center gap-2"></div>
+                      </th>
+                      
+                      <th class="px-3 py-3" colspan="2"></th>
+                    </tr>
+                  </thead>
+<tbody id="vd_checklist" class="divide-y divide-slate-100 text-xs text-slate-700 bg-white"><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">حالة السيارة الخارجية</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">حالة الإطارات والضغط</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">مستوى الشحن والتجهيز</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">فرامل وتجهيزات السلامة</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">حالة الأضواء والإشارات</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr><tr class="border-b border-slate-100 last:border-0">
+        
+        <td class="px-3 py-3">نظافة السيارة الداخلية والخارجيه</td>
+          <td class="px-3 py-3" colspan="3">
+          <input type="text" class="w-full bg-white border border-slate-200 rounded-xl px-2 py-3 text-xs outline-none min-h-[48px]" placeholder="اكتب ملاحظات">
+          
+            <div class="mt-2">
+              <input id="vd_cleaning_images_input" type="file" accept="image/*" multiple="" class="hidden">
+              <button type="button" class="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 rounded-xl px-3 py-2 text-[11px] font-bold flex items-center justify-center gap-2" onclick="vdPickCleaningImages();">
+                <i class="fa-solid fa-image"></i> إضافة صور
+              </button>
+              <div id="vd_cleaning_images_preview" class="mt-2 flex flex-wrap items-center gap-2"></div>
+              <div class="mt-1 text-[10px] text-slate-500">مسموح صور متعددة</div>
+            </div>
+          
+        </td>
+        <td class="px-3 py-3">
+          <select class="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs outline-none">
+            <option value="" selected=""></option>
+            <option value="good">جيد</option>
+            <option value="very_good">جيد جداً</option>
+            <option value="excellent">ممتاز</option>
+          </select>
+        </td>
+        <td class="px-3 py-3">
+          <button type="button" class="bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold" onclick="this.disabled=true; this.innerText=&#39;تم&#39;; window.dispatchEvent(new CustomEvent(&#39;vd-captain-confirmed&#39;, { detail: { captain: this.dataset.captain || &#39;&#39; } }));">تأكيد</button>
+        </td>
+      </tr></tbody>
+
+
+                </table>
+              </div>
+
+              <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50">
+                  <div class="text-sm font-black text-slate-900 mb-2"> </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-xs font-bold text-slate-600 block mb-1">التوقيع</label>
+                      <input id="vd_corp_signature" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                    </div>
+                    <div>
+                      <label class="text-xs font-bold text-slate-600 block mb-1">الاسم</label>
+                      <input id="vd_corp_name" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <label class="text-xs font-bold text-slate-600 block mb-1">التاريخ</label>
+                    <input id="vd_corp_date" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+                  </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50">
+                  <div class="text-sm font-black text-slate-900 mb-2">Employee</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="text-xs font-bold text-slate-600 block mb-1">التوقيع</label>
+                      <input id="vd_emp_signature" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                    </div>
+                    <div>
+                      <label class="text-xs font-bold text-slate-600 block mb-1">الاسم</label>
+                      <input id="vd_emp_name" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                    </div>
+                  </div>
+                  <div class="mt-3">
+                    <label class="text-xs font-bold text-slate-600 block mb-1">الرقم الوظيفي</label>
+                    <input id="vd_emp_job_no" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="________">
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 flex items-center justify-end gap-3">
+                <button type="button" onclick="vehicleDeliverySubmit()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm">
+                  حفظ النموذج
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- (إغلاق section users هنا بالـ HTML الأصلي) -->
+
+          </div>
+        
+
+        <section data-page-section="drivers" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h2 class="text-lg font-black text-slate-900 mb-4">قاعدة بيانات كباتن وسائقي الأسطول</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div class="lg:col-span-2 overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-right">
+                  <thead class="bg-slate-100 text-xs font-bold text-slate-600">
+                    <tr>
+                      <th class="px-5 py-4">اسم كابتن السيارة</th>
+                      <th class="px-5 py-4">كود الرخصة</th>
+                      <th class="px-5 py-4">انتهاء الرخصة</th>
+                      <th class="px-5 py-4">حالة الربط</th>
+                      <th class="px-5 py-4">حالة الرحلات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="driversTableBody" class="divide-y divide-slate-200/80 text-sm bg-white"></tbody>
+                </table>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+                <h3 class="text-sm font-extrabold text-slate-900 pb-2 border-b border-slate-200">تسجيل كابتن جديد بالمنظومة</h3>
+                <form id="addDriverForm" class="space-y-3" onsubmit="return addDriver(event)">
+                  <div>
+                    <label class="text-xs font-bold text-slate-600 block mb-1">الاسم الرباعي للكابتن</label>
+                    <input id="newDriverName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none" placeholder="مثال: كابتن علاء مرسي" required="">
+                  </div>
+                  <div>
+                    <label class="text-xs font-bold text-slate-600 block mb-1">رقم الرخصة</label>
+                    <input id="newDriverLicense" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-mono outline-none" placeholder="مثال: LIC-99042" required="">
+                  </div>
+                  <div>
+                    <label class="text-xs font-bold text-slate-600 block mb-1">تاريخ انتهاء الرخصة</label>
+                    <input id="newDriverLicenseExpiry" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none" required="">
+                  </div>
+                  <button type="submit" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-xs">إدراج السائق فوراً</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section data-page-section="dispatchers" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h2 class="text-lg font-black text-slate-900 mb-4">غرفة موجهي ومرحلي الرحلات المعتمدين</h2>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center mb-5">
+              <div>
+                <span class="font-extrabold text-slate-900 text-sm">مروان   (مشرف غرفة العمليات)</span>
+                <p class="text-xs text-slate-500 mt-0.5">الصلاحية: مسؤول جدولة وتتبع مسارات الطوارئ للسيارات</p>
+              </div>
+              <span class="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">نشط حالياً</span>
+            </div>
+
+            <h3 class="text-sm font-black text-slate-900 mb-3">طلبات الإجازات قيد المراجعة</h3>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+              <table class="w-full text-right">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                    <th class="px-4 py-3">اسم السائق</th>
+                    <th class="px-4 py-3">من → إلى</th>
+                    <th class="px-4 py-3">السبب</th>
+                    <th class="px-4 py-3">اليوم/الشفت المقترح</th>
+                    <th class="px-4 py-3">قرار الموجّه</th>
+                  </tr>
+                </thead>
+                <tbody id="dispatcherLeaveRequestsBody" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section data-page-section="vehicles" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+<h2 class="text-lg font-black text-slate-900"><span id="fleetFilterTitle">منظومة إدارة ومتابعة المركبات الكهربائية EVs</span></h2>
+
+            </div>
+
+            <!-- Filter Header (Company + Vehicle Type) -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+
+              <!-- زر إضافة سيارة (فوق جدول EV من ناحية الشمال) -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-xs text-slate-600 font-bold" id="fleetAddHint">إضافة سيارة جديدة (EV)</div>
+                <button type="button" onclick="showAddVehicleFormByUserAction()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm">
+                  <i class="fa-solid fa-plus mr-2"></i> إضافة سيارة
+                </button>
+              </div>
+
+              <!-- Add Vehicle (empty inputs) -->
+              <div id="addVehicleFormBox" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-4 hidden">
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">إضافة سيارة جديدة</h3>
+                    <p class="text-xs text-slate-600 mt-1">اكتب البيانات ثم اضغط «إضافة» لعرضها مباشرة في جدول الشركة + النوع الحالي.</p>
+                  </div>
+                </div>
+
+                <form id="addVehicleForm" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3" onsubmit="return addVehicleFromForm(event)">
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">اسم كابتن المسؤول</label>
+                    <input id="newVehicleCaptainName" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="اكتب اسم الكابتن" required="">
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">رقم اللوحة</label>
+                    <input id="newVehiclePlate" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="مثال: س ج د 9632" required="">
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">المحطة (القاهرة/الإسكندرية)</label>
+                    <select id="newVehicleHub" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-bold" required="">
+                      <option value="القاهرة">القاهرة</option>
+                      <option value="الإسكندرية">الإسكندرية</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">البطارية (%)</label>
+                    <input id="newVehicleBattery" type="number" min="0" max="100" step="1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="مثال: 85" required="">
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">الموديل</label>
+                    <input id="newVehicleModel" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="مثال: Model X">
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">الشاسيه</label>
+                    <input id="newVehicleChassisNo" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="مثال: CHASSIS-123">
+                  </div>
+
+                  <div class="md:col-span-3 flex items-center justify-end gap-3 pt-1">
+                    <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm">
+                      <i class="fa-solid fa-plus mr-2"></i> إضافة
+                    </button>
+                    <button type="button" onclick="resetAddVehicleForm()" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs">
+                      مسح الحقول
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-900">اختيار الشركة ونوع العربية</h3>
+                  <p class="text-xs text-slate-600 mt-1">يتم تحديث الجدول حسب الاختيار</p>
+                </div>
+
+                <div class="flex flex-wrap items-end gap-3">
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">اسم الشركة</label>
+                    <select id="fleetCompanySelect" class="w-44 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-bold">
+                      <option value="Via" selected="">Via</option>
+                      <option value="Mina Tour">Mina Tour</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">نوع العربية</label>
+                    <select id="fleetTypeSelect" class="w-44 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none font-bold">
+                      <option value="EV" selected="">EV</option>
+                      <option value="Fuel">Fuel</option>
+<option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+
+                  <button type="button" onclick="applyFleetFilter()" class="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm">
+                    تم
+                  </button>
+                </div>
+              </div>
+
+      <div class="mt-4 text-xs font-bold text-slate-700">
+                العرض الحالي: <span id="fleetFilterCurrentLabel" class="text-orange-700"></span>
+              </div>
+
+              <div class="mt-2 text-sm font-extrabold text-slate-800">
+                <span id="fleetHeaderWord">منظومة إدارة ومتابعة المركبات الكهربائية EVs</span>
+              </div>
+
+              <div class="mt-1 text-xs font-bold text-slate-600">
+                <span id="batteryTableTitle">مستوى شحن البطارية — EV</span>
+              </div>
+            </div>
+
+            <!-- =================== Via =================== -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+
+               
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">EV</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyViaEV" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">Fuel</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyViaFuel" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">Hayber</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyViaHayber" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- =================== Mina Tour =================== -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                
+               
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-1 gap-4">
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">EV</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyMinaEV" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">Fuel</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyMinaFuel" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-700">Hayber</div>
+                  <table class="w-full text-right">
+                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3">رقم لوحة السيارة</th>
+                        <th class="px-3 py-3">الكابتن المسؤول</th>
+                        <th class="px-3 py-3">الحالة المباشرة</th>
+                        <th class="px-3 py-3">مستوى شحن البطارية</th>
+                        <th class="px-3 py-3">موقع المبيت</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBodyMinaHayber" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <section data-page-section="hubs" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h2 class="text-lg font-black text-slate-900 mb-6">محطات المبيت الفرعية واللوجستية الرئيسية (Via Hubs)</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                <h3 class="text-sm font-black text-slate-900 mb-2">محطة القاهرة الكبرى (<span id="hubsCairo">0</span> مركبات)</h3>
+                <div id="hubsCairoList" class="space-y-2 max-h-[250px] overflow-y-auto"></div>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                <h3 class="text-sm font-black text-slate-900 mb-2">محطة الإسكندرية الفرعية (<span id="hubsAlex">0</span> مركبات)</h3>
+                <div id="hubsAlexList" class="space-y-2 max-h-[250px] overflow-y-auto"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section data-page-section="assignments" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h2 class="text-lg font-black text-slate-900 mb-4">التكليفات الخارجية والرحلات المحولة للنظام</h2>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-right">
+                <thead class="bg-slate-50 text-xs font-bold text-slate-500">
+                  <tr>
+                    <th class="px-6 py-4">رقم التكليف (Trip ID)</th>
+                    <th class="px-6 py-4">الكابتن المعين</th>
+                    <th class="px-6 py-4">نقطة الانطلاق</th>
+                    <th class="px-6 py-4">وجهة الوصول</th>
+                    <th class="px-6 py-4">مصدر الإرسال</th>
+                  </tr>
+                </thead>
+                <tbody id="assignmentsBody" class="divide-y divide-slate-100 text-sm bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section data-page-section="workforce" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+            <h2 class="text-lg font-black text-slate-900 border-b border-slate-100 pb-2">جدول الورديات والـ Workforce وتنظيم الشيفتات</h2>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-right">
+                <thead class="bg-slate-50 text-xs font-bold text-slate-600">
+                  <tr>
+                    <th class="px-4 py-4">اسم الكابتن المقيد</th>
+                    <th class="px-2 py-4 text-center">السبت</th>
+                    <th class="px-2 py-4 text-center">الأحد</th>
+                    <th class="px-2 py-4 text-center">الإثنين</th>
+                    <th class="px-2 py-4 text-center">الثلاثاء</th>
+                    <th class="px-2 py-4 text-center">الأربعاء</th>
+                    <th class="px-2 py-4 text-center">الخميس</th>
+                    <th class="px-2 py-4 text-center">الجمعة</th>
+                  </tr>
+                </thead>
+                <tbody id="shiftsGrid" class="divide-y divide-slate-100 text-xs text-slate-700"></tbody>
+              </table>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-xl space-y-3">
+<span id="selectedShiftLabel" class="text-orange-600"></span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input id="shiftInput" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: صباحي 08:00 - 16:00">
+                <button onclick="applySelectedShift()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-xs">تطبيق التعديل</button>
+              </div>
+            </div>
+
+            <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
+              <div class="text-xs font-bold text-slate-800">إضافة سائق للـ Workforce &amp; Shifts</div>
+              <form id="addWorkforceDriverForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3" onsubmit="return addWorkforceDriver(event)">
+                <input id="newWorkforceDriverName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="اسم السائق" required="">
+                <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded-xl font-bold text-xs">إضافة</button>
+              </form>
+            </div>
+
+            <!-- =====================
+                 إجازات السائقين (New)
+                 ===================== -->
+            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-black text-slate-900">إدارة الإجازات</h3>
+                  <p class="text-xs text-slate-600">أدخل بيانات الإجازة ثم اضغط «إضافة طلب» لعرض التفاصيل.</p>
+                </div>
+                <span class="text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-full">Autos + UI</span>
+              </div>
+
+              <form id="leaveRequestForm" class="grid grid-cols-1 md:grid-cols-2 gap-3" onsubmit="return addLeaveRequest(event)">
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">اسم السائق</label>
+                  <input id="leaveDriverName" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: كابتن أحمد رجب البستاني" required="">
+                </div>
+
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">اليوم المقترح (اختياري)</label>
+                  <input id="leaveShiftDay" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: السبت أو الأحد أو الخميس">
+                </div>
+
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">من تاريخ</label>
+                  <input id="leaveFromDate" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" required="">
+                </div>
+
+                <div>
+                  <label class="text-xs font-bold text-slate-600 block mb-1">إلى تاريخ</label>
+                  <input id="leaveToDate" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" required="">
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-slate-600 block mb-1">سبب الإجازة</label>
+                  <input id="leaveReason" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none" placeholder="مثال: ظروف خاصة / إجازة مرضية / تدريب" required="">
+                </div>
+
+                <div class="md:col-span-2 flex items-center gap-3">
+                  <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs">
+                    إضافة طلب إجازة
+                  </button>
+                  <button type="button" onclick="document.getElementById(&#39;leaveRequestForm&#39;).reset()" class="bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs">
+                    مسح الحقول
+                  </button>
+                </div>
+              </form>
+
+              <div id="leaveRequestToast" class="hidden"></div>
+
+              <div class="pt-3 border-t border-slate-200">
+                <h4 class="text-xs font-black text-slate-800 mb-2">طلبات الإجازات</h4>
+                <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+                  <table class="w-full text-right">
+                    <thead>
+                      <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                        <th class="px-4 py-3">اسم السائق</th>
+                        <th class="px-4 py-3">من → إلى</th>
+                        <th class="px-4 py-3">السبب</th>
+                        <th class="px-4 py-3">الحالة</th>
+                        <th class="px-4 py-3">تفاصيل</th>
+                      </tr>
+                    </thead>
+                    <tbody id="leaveRequestsBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                  </table>
+                </div>
+
+                <div id="leaveDetailsBox" class="mt-4 hidden bg-white border border-slate-200 rounded-xl p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <h5 class="text-sm font-extrabold text-slate-900 mb-1">تفاصيل الإجازة</h5>
+                      <p id="leaveDetailsTitle" class="text-xs font-mono text-slate-700"></p>
+                    </div>
+                    <button class="text-slate-400 hover:text-slate-700" type="button" onclick="hideLeaveDetails()">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                      <div class="font-bold text-slate-800">التواريخ</div>
+                      <div id="leaveDetailsDates" class="text-slate-700 mt-1"></div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                      <div class="font-bold text-slate-800">اليوم/الشفت المقترح</div>
+                      <div id="leaveDetailsShift" class="text-slate-700 mt-1"></div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 md:col-span-2">
+                      <div class="font-bold text-slate-800">السبب</div>
+                      <div id="leaveDetailsReason" class="text-slate-700 mt-1"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <section data-page-section="tracking" class="page-section space-y-6 hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+              <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+                <span class="text-sm font-black text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-earth-africa text-orange-600 text-base"></i> خريطة البث الحي وحركة الكباتن الفورية عبر الـ GPS الاقليمي
+                </span>
+                <span class="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full font-bold">
+                  الرحلات النشطة بالخريطة: <span id="active-count" class="font-mono text-sm">3</span>
+                </span>
+              </div>
+              <div id="map"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col">
+              <h3 class="text-sm font-black text-slate-900 mb-4 pb-2 border-b border-slate-100 flex justify-between items-center">
+                <span>الكباتن المتحركين على الطريق الآن</span>
+                <span class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-bold" id="movingDriversCount">3</span>
+              </h3>
+              <div class="space-y-3 overflow-y-auto max-h-[440px] pr-1" id="active-trips-list"></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 class="text-sm font-black text-slate-900">سجل إشارات البث التلقائي للرحلات الفورية المستلمة بالوقت الحقيقي (Telemetry Logs)</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-right">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500">
+                    <th class="px-6 py-4">رقم لوحة المركبة</th>
+                    <th class="px-6 py-4">اسم كابتن السيارة المسؤول</th>
+                    <th class="px-6 py-4">خط السير ونقطة الانطلاق</th>
+                    <th class="px-6 py-4">وجهة الوصول الفورية المقررة</th>
+                    <th class="px-6 py-4">حالة الاتصال بخادم الـ GPS</th>
+                  </tr>
+                </thead>
+                <tbody id="trips-table-body" class="divide-y divide-slate-100 text-sm bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section data-page-section="documents" class="page-section space-y-6 hidden">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+            <h2 class="text-lg font-black text-slate-900">الوثائق والتقارير التشغيلية والمستندات المالية</h2>
+
+            <!-- ملخص الأرباح/المصروفات الحالي -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="p-5 bg-gradient-to-br from-emerald-50 to-white rounded-xl border border-emerald-200">
+                <span class="text-xs text-emerald-700 font-bold">إجمالي عوائد وأرباح المحاكاة الفورية</span>
+                <div class="text-3xl font-black mt-2" id="finTotalEarnings">4,250 ج.م</div>
+              </div>
+              <div class="p-5 bg-gradient-to-br from-rose-50 to-white rounded-xl border border-rose-200">
+                <span class="text-xs text-rose-700 font-bold">المصروفات التشغيلية لمركبات الـ EV</span>
+                <div class="text-3xl font-black mt-2" id="finTotalExpenses">1,120 ج.م</div>
+              </div>
+              <div class="p-5 bg-slate-900 text-white rounded-xl">
+                <span class="text-xs text-orange-400 font-bold">صافي العوائد والأرباح التشغيلية المتوقعة</span>
+                <div class="text-3xl font-black mt-2" id="finNetProfits">3,130 ج.م</div>
+              </div>
+            </div>
+
+            <!-- ================
+                 جدول الرواتب
+                 ================ -->
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 class="text-sm font-black text-slate-900">جدول حساب الراتب بالمكتب (حسب الكابتن أو الشركة)</h3>
+                  <p class="text-xs text-slate-600 mt-1">أدخل قيم «مبلغ الخبطة» و«خصم التأخير» (لكل عدد) وسيتحسب الراتب تلقائياً.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="text-xs font-bold text-slate-700">
+                    مبلغ الخبطة:
+                    <input id="inputBumpValue" type="number" min="0" step="1" value="200" class="w-32 ml-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+                  </div>
+                <div class="text-xs font-bold text-slate-700">
+                    خصم التأخير (لكل تأخير):
+                    <input id="inputDelayValue" type="number" min="0" step="1" value="150" class="w-32 ml-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white">
+                <table class="w-full text-right">
+                  <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                      <th class="px-4 py-3">اسم الكابتن</th>
+                      <th class="px-4 py-3">اسم العربية</th>
+                      <th class="px-4 py-3">المكتب</th>
+                      <th class="px-4 py-3">عدد الخبطات</th>
+                      <th class="px-4 py-3">عدد التأخيرات</th>
+                      <th class="px-4 py-3">خصم التأخير</th>
+                      <th class="px-4 py-3">إجمالي الراتب بعد الخصم</th>
+                    </tr>
+                  </thead>
+                  <tbody id="driversSalaryBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table>
+              </div>
+
+              <div class="text-[11px] text-slate-500">
+                الراتب الثابت = <span class="font-bold text-slate-700">10,000 ج.م</span>
+                · خصم التأخير يُحسب فقط على «الكابتن» (اختيار الكابتن) وليس على «الشركة».
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main></div>
+    
+  
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  
+
+
+  <script src="app.js"></script>
+</body></html>
